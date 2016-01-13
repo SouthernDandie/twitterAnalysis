@@ -182,11 +182,28 @@ if (Meteor.isServer) {
    
           elasticSearchGET: function (thisLat, thisLon) {
             try{
-              var result = HTTP.call("GET", Meteor.settings.elasticsearchURL + '_search'
-                
+              var result = HTTP.call("GET", Meteor.settings.elasticsearchURL + '_search?fielddata_fields=location.geohash',
+                {data: {"query":{
+                        'bool' : {
+                          "must" : {
+                              "match_all" : {}
+                          },
+                          "filter" : {
+                              "geohash_cell": {
+                                  "location": {
+                                      "lat": 37.7648,
+                                      "lon": -122.4201
+                                  },
+                                  "precision": 3,
+                                  "neighbors": true
+                              }
+                          }
+                        }
+                      }}
+                }
 
                 );
-              //console.log(result.content.toString());
+              console.log(result.content.toString());
               return result.content;
             } catch (e) {
               console.log(e);
