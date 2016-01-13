@@ -4,7 +4,35 @@ if (Meteor.isClient) {
     GoogleMaps.load();
   });
 
+  Template.searchForElasticSearch.events({
+    'click button': function () {
+            Meteor.call("elasticSearchGET", function(error, results) {
+              if(!error){
+                //GoogleMaps.ready('map', function(map) {
+                    var theRealData = JSON.parse(results);
+                    //console.log(results);
+                    var theArray = theRealData.hits.hits;
+                    var myLatLng = {};
+                    //console.log(JSON.stringify(theArray));
+                    
 
+                     for(var i=0; i<5; i++){
+                        console.log(theArray[i]["_id"]);
+                         myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
+                        console.log(myLatLng);
+                        console.log(theArray[i]['_source']['tweet_text']);
+                        var marker = new google.maps.Marker({
+                          position: myLatLng,
+                          map: GoogleMaps.maps.map.instance,
+                          title: theArray[i]['_source']['tweet_text']
+                        });
+
+                    }
+                  //});
+              }
+            });
+    }
+  });
 
   Template.map.helpers({  
     mapOptions: function() {
@@ -39,8 +67,8 @@ if (Meteor.isClient) {
       google.maps.event.addListener(map.instance, 'click', function(event) {
         console.log('lat: ' + event.latLng.lat());
         console.log('long: ' + event.latLng.lng());
-        Meteor.call("checkTwitter", function(error, results) {
-          console.log('results: ' + results);
+        Meteor.call("checkTwitter", event.latLng.lat(), event.latLng.lng(), function(error, results) {
+
         });
 
 
@@ -69,7 +97,7 @@ if (Meteor.isServer) {
 
   });
 
-  Meteor.methods({checkTwitter: function () {
+  Meteor.methods({checkTwitter: function (lat, long) {
 
 
     var Fiber = Meteor.npmRequire('fibers');
@@ -85,12 +113,12 @@ if (Meteor.isServer) {
         })
         //this.unblock();
         try {
-          var lat = 37.76489493;
-          var long = -122.42010036;
+          //var lat = 37.76489493;
+          //var long = -122.42010036;
           
-          var sanFrancisco = [ long - .5, lat - .5, long + .5, lat + .5 ]
+          var theLocationToFind = [ long - .5, lat - .5, long + .5, lat + .5 ]
 
-          var stream = T.stream('statuses/filter', { locations: sanFrancisco })
+          var stream = T.stream('statuses/filter', { locations: theLocationToFind })
 
           stream.on('tweet', function (tweet) {
              
@@ -127,7 +155,6 @@ if (Meteor.isServer) {
               
               if( (thisLat != null) && (thisLon != null) ){
 
-                console.log('location: ' + thisLat + ' ' + thisLon);
 
                var result = Meteor._wrapAsync(elasticSearchPostB(tweet, thisLat, thisLon));
 
@@ -153,15 +180,14 @@ if (Meteor.isServer) {
 
   Meteor.methods({ 
    
-          elasticSearchPost: function (tweet, thisLat, thisLon) {
+          elasticSearchGET: function (thisLat, thisLon) {
             try{
-              var result = HTTP.call("PUT", Meteor.settings.elasticsearchURL + tweet.id,
-                {data: {'screen_name': tweet.user.screen_name, 'keywords': tweet.text,
-                'name': tweet.user.name, 'tweet_text':tweet.text , 'created': tweet.created_at, 'location': {'lat': thisLat, 'lon': thisLon} }}
+              var result = HTTP.call("GET", Meteor.settings.elasticsearchURL + '_search'
+                
 
                 );
-              console.log(result.content.toString());
-              return true;
+              //console.log(result.content.toString());
+              return result.content;
             } catch (e) {
               console.log(e);
               return false;
@@ -176,17 +202,14 @@ if (Meteor.isServer) {
     var Future = Meteor.npmRequire('fibers/future');
     var future = new Future();
 
-
-            console.log('created_at: ' + tweet.created_at);
-
+            var date = new Date(); 
             Fiber(function(){
               try{
                 var result = HTTP.call("PUT", Meteor.settings.elasticsearchURL + tweet.id,
                   {data: {'screen_name': tweet.user.screen_name, 'keywords': tweet.text,
-                  'name': tweet.user.name, 'tweet_text':tweet.text , 'created': '2015-01-01T12:10:30Z', 'location': {'lat': thisLat, 'lon': thisLon} }}
+                  'name': tweet.user.name, 'tweet_text':tweet.text , 'created': date.toJSON(), 'location': {'lat': thisLat, 'lon': thisLon} }}
 
                   );
-                console.log(result.content.toString());
                 return true;
               } catch (e) {
                 console.log(e);

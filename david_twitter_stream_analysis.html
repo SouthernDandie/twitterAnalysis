@@ -5,8 +5,16 @@
 <body>
   <h1>Check out this Twitter Stream!</h1>
 
+	<div class="wrapper">
+
+      <form class="new-task">
+        <input type="text" name="text" placeholder="topic to search" size=100 align="top"/>
+      </form>
+  </div>
+
 
   {{> map}}
+  {{> searchForElasticSearch}}
 
 </body>
 
@@ -16,4 +24,10 @@
   <div class="map-container">
     {{> googleMap name="map" options=mapOptions}}
   </div>
-</template>  
+</template>
+
+<template name="searchForElasticSearch">
+<div class="wrapper">
+  <button>Search</button>
+</div>
+</template>
