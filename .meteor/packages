@@ -24,3 +24,11 @@ quadric:easy-elasticsearch
 http
 twitter
 schiller:twit
+promise
+kwk:fibers
+meteorhacks:npm
+
+
+npm-container
+meteorhacks:async
+okgrow:promise
