@@ -9,6 +9,9 @@
   {{> searchForElasticSearch}}
 
   {{> map}}
+  {{> superTweetTemplate}}
+  {{test}}
+  
 
 </body>
 
@@ -31,3 +34,19 @@
       <button>Search</button>
 </div>
 </template>
+
+
+<template name="tweetTemplate">
+  <li>{{tweet}} at {{location}} <br></li>
+
+</template>
+
+
+<template name="superTweetTemplate">
+  <ul>
+      {{#each tweets}}
+        {{> tweetTemplate}}
+        <br>
+      {{/each}}
+    </ul>
+ </template>

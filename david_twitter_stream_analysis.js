@@ -1,10 +1,62 @@
+var params = {};
+
 if (Meteor.isClient) {
 
   Meteor.startup(function() {
     GoogleMaps.load();
+
+    /*if (location.search) {
+        var parts = location.search.substring(1).split('&');
+
+        for (var i = 0; i < parts.length; i++) {
+            var nv = parts[i].split('=');
+            if (!nv[0]) continue;
+            params[nv[0]] = nv[1] || true;
+        }
+    }
+
+    // Now you can get the parameters you want like so:
+    console.log(params.lat);
+    console.log(params.lon);
+    console.log(params.dis);
+    console.log(params.topic);
+
+
+              var finalTextArray = [];
+              var tempTextObject = {};
+
+
+
+            Meteor.call("elasticSearchGET", params.lat, params.lon, params.dis, params.topic, function(error, results) {
+              if(!error){
+                    var theRealData = JSON.parse(results);
+                    var theArray = theRealData.hits.hits;
+                    var myLatLng = {};
+                    
+                    console.log('hits: ' + theRealData.hits.total);
+                     for(var i=0; i<theRealData.hits.total; i++){
+                        myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
+                        var marker = new google.maps.Marker({
+                          position: myLatLng,
+                          map: GoogleMaps.maps.map.instance,
+                          animation: google.maps.Animation.DROP,
+                          title: theArray[i]['_source']['tweet_text']
+                        });
+                        tempTextObject = {'tweet' : theArray[i]['_source']['tweet_text'], 'location': myLatLng};
+                        finalTextArray.push(tempTextObject);
+
+                    }
+
+                                Session.set('tweets', finalTextArray);
+
+                    
+              }
+            });
+
+*/
   });
 
-  Template.searchForElasticSearch.events({
+  Template.body.events({//searchForElasticSearch
     'click button': function () {
       //console.log(target.topic.value);
       var userTopic = document.getElementById('topic').value;
@@ -12,48 +64,50 @@ if (Meteor.isClient) {
       var userLongitude = document.getElementById('longitude').value;
       var userDistance = document.getElementById('distance').value;
 
-          /*GoogleMaps.maps.map.instance.clearMarkers = function() {
-            for(var i=0; i < this.markers.length; i++){
-                this.markers[i].setMap(null);
-            }
-            this.markers = new Array();
-          };*/
-          //google.maps.map.instance.setMapOnAll(null);
-          //var thisMap = new google.maps.Map(document.getElementById("map"));
-          var thisMap = GoogleMaps.maps.map.instance;
+      //window.location = "http://localhost:3000/?topic="+userTopic+"&lat="+userLatitude+"&lon="+userLongitude+"&dis="+userDistance;
+
+          thisMap = GoogleMaps.maps.map.instance;
+
+          GoogleMaps.ready('map', function(map) {
+            var marker = new google.maps.Marker({
+              position: map.options.center,
+              map: map.instance
+            });
+          });
+              var finalTextArray = [];
+              var tempTextObject = {};
+
 
             Meteor.call("elasticSearchGET", userLatitude, userLongitude, userDistance, userTopic, function(error, results) {
               if(!error){
-                //GoogleMaps.ready('map', function(map) {
                     var theRealData = JSON.parse(results);
-                    //console.log(results);
                     var theArray = theRealData.hits.hits;
                     var myLatLng = {};
-                    //console.log(JSON.stringify(theArray));
                     
                     console.log('hits: ' + theRealData.hits.total);
                      for(var i=0; i<theRealData.hits.total; i++){
-                        //console.log(theArray[i]["_id"]);
-                         myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
-                        //console.log(myLatLng);
-                        //console.log(theArray[i]['_source']['tweet_text']);
+                        myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
                         var marker = new google.maps.Marker({
                           position: myLatLng,
                           map: GoogleMaps.maps.map.instance,
                           animation: google.maps.Animation.DROP,
                           title: theArray[i]['_source']['tweet_text']
                         });
+                        tempTextObject = {'tweet' : theArray[i]['_source']['tweet_text'], 'location': myLatLng};
+                        finalTextArray.push(tempTextObject);
 
                     }
-                    //google.maps.map.LatLng(userLatitude, userLongitude);
-                  //});
+                                Template.superTweetTemplate.prediction = function () {
+                                  tweets: finalTextArray
+                                };
+
+                                Session.set('tweets', finalTextArray);
+                                Session.set('test', "finalTextArray");
+                    
               }
             });
 
-              //return {
-                   // center: new google.maps.LatLng(userLatitude, userLongitude),
-                   // zoom: 8
-                  //};
+
     }
   });
 
@@ -61,12 +115,25 @@ if (Meteor.isClient) {
     mapOptions: function() {
       if (GoogleMaps.loaded()) {
         return {
-          center: new google.maps.LatLng(37.322078, -121.931466),//focus on 7 Stars, my favorite bar
-          zoom: 8
+          center: new google.maps.LatLng(37.322078, -121.931466),
+          zoom: 9
         };
       }
     }
   });
+
+  Template.body.helpers({
+
+       tweets: [
+        { tweet: "This is tweet 1", location: '37.322078, -121.931466' },
+        { tweet: "This is tweet 2", location: '37.322078, -121.931466' },
+        { tweet: "This is tweet 3", location: '37.322078, -121.931466' }
+      ]
+    
+                        
+   });
+
+
 
 
   Template.body.onCreated(function() {
@@ -88,11 +155,12 @@ if (Meteor.isClient) {
   Template.map.onCreated(function() {  
     GoogleMaps.ready('map', function(map) {
       google.maps.event.addListener(map.instance, 'click', function(event) {
-        console.log('lat: ' + event.latLng.lat());
-        console.log('long: ' + event.latLng.lng());
-        Meteor.call("checkTwitter", event.latLng.lat(), event.latLng.lng(), function(error, results) {
+        //console.log('lat: ' + event.latLng.lat());
+        //console.log('long: ' + event.latLng.lng());
+        //TURN THIS BACK ON TO ALLOW THE SERVER TO STREAM FROM TWITTER AND PUT THE RESULTS ON ELASTICSEARCH
+        //Meteor.call("checkTwitter", event.latLng.lat(), event.latLng.lng(), function(error, results) {
 
-        });
+        //});
 
 
        
@@ -119,7 +187,7 @@ if (Meteor.isServer) {
 
 
   });
-
+/*TURN THIS BACK ON TO ALLOW THE SERVER TO READ FROM TWITTER
   Meteor.methods({checkTwitter: function (lat, long) {
 
 
@@ -134,10 +202,8 @@ if (Meteor.isServer) {
           access_token:         Meteor.settings.access_token,
           access_token_secret:  Meteor.settings.access_token_secret
         })
-        //this.unblock();
         try {
-          //var lat = 37.76489493;
-          //var long = -122.42010036;
+
           
           var theLocationToFind = [ long - .5, lat - .5, long + .5, lat + .5 ]
 
@@ -197,7 +263,7 @@ if (Meteor.isServer) {
         }
 
 
-  }});
+  }});*/
 
 
 
@@ -277,7 +343,7 @@ if (Meteor.isServer) {
 
     });
 
-
+/* TURN THIS BACK ON TO ALLOW THE SERVER TO PUT TO THE ELASTICSEACH
   function elasticSearchPostB(tweet, thisLat, thisLon){
     var Fiber = Meteor.npmRequire('fibers');
     var Future = Meteor.npmRequire('fibers/future');
@@ -300,5 +366,5 @@ if (Meteor.isServer) {
 
             
   }
-
+*/
 }
