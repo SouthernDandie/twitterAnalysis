@@ -5,16 +5,10 @@
 <body>
   <h1>Check out this Twitter Stream!</h1>
 
-	<div class="wrapper">
 
-      <form class="new-task">
-        <input type="text" name="text" placeholder="topic to search" size=100 align="top"/>
-      </form>
-  </div>
-
+  {{> searchForElasticSearch}}
 
   {{> map}}
-  {{> searchForElasticSearch}}
 
 </body>
 
@@ -22,12 +16,18 @@
 
 <template name="map">  
   <div class="map-container">
-    {{> googleMap name="map" options=mapOptions}}
+    {{> googleMap name="map" id="map" options=mapOptions}}
   </div>
 </template>
 
 <template name="searchForElasticSearch">
 <div class="wrapper">
-  <button>Search</button>
+ <form class="new-task">
+        <input type="text" id="topic" name="topic" placeholder="topic to search" size=40 align="top"/>
+         Latitude: <input type="text" id="latitude" name="latitude" value="37.322078" size=10 align="top"/>
+         Longitude: <input type="text" id="longitude" name="longitude" value="-121.931466" size=10 align="top"/>
+         Distance: <input type="text" id="distance" name="distance" value="20" size=5 align="top"/> miles
+      </form>
+      <button>Search</button>
 </div>
 </template>

@@ -6,7 +6,23 @@ if (Meteor.isClient) {
 
   Template.searchForElasticSearch.events({
     'click button': function () {
-            Meteor.call("elasticSearchGET", function(error, results) {
+      //console.log(target.topic.value);
+      var userTopic = document.getElementById('topic').value;
+      var userLatitude = document.getElementById('latitude').value;
+      var userLongitude = document.getElementById('longitude').value;
+      var userDistance = document.getElementById('distance').value;
+
+          /*GoogleMaps.maps.map.instance.clearMarkers = function() {
+            for(var i=0; i < this.markers.length; i++){
+                this.markers[i].setMap(null);
+            }
+            this.markers = new Array();
+          };*/
+          //google.maps.map.instance.setMapOnAll(null);
+          //var thisMap = new google.maps.Map(document.getElementById("map"));
+          var thisMap = GoogleMaps.maps.map.instance;
+
+            Meteor.call("elasticSearchGET", userLatitude, userLongitude, userDistance, userTopic, function(error, results) {
               if(!error){
                 //GoogleMaps.ready('map', function(map) {
                     var theRealData = JSON.parse(results);
@@ -15,22 +31,29 @@ if (Meteor.isClient) {
                     var myLatLng = {};
                     //console.log(JSON.stringify(theArray));
                     
-
-                     for(var i=0; i<5; i++){
-                        console.log(theArray[i]["_id"]);
+                    console.log('hits: ' + theRealData.hits.total);
+                     for(var i=0; i<theRealData.hits.total; i++){
+                        //console.log(theArray[i]["_id"]);
                          myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
-                        console.log(myLatLng);
-                        console.log(theArray[i]['_source']['tweet_text']);
+                        //console.log(myLatLng);
+                        //console.log(theArray[i]['_source']['tweet_text']);
                         var marker = new google.maps.Marker({
                           position: myLatLng,
                           map: GoogleMaps.maps.map.instance,
+                          animation: google.maps.Animation.DROP,
                           title: theArray[i]['_source']['tweet_text']
                         });
 
                     }
+                    //google.maps.map.LatLng(userLatitude, userLongitude);
                   //});
               }
             });
+
+              //return {
+                   // center: new google.maps.LatLng(userLatitude, userLongitude),
+                   // zoom: 8
+                  //};
     }
   });
 
@@ -180,10 +203,45 @@ if (Meteor.isServer) {
 
   Meteor.methods({ 
    
-          elasticSearchGET: function (thisLat, thisLon) {
-            try{
-              var result = HTTP.call("GET", Meteor.settings.elasticsearchURL + '_search?fielddata_fields=location.geohash',
-                {data: {"query":{
+          elasticSearchGET: function (thisLat, thisLon, thisDistance, thisText) {
+            if(thisText != ''){
+              thisDistance = thisDistance + "mi";
+                  mydata = {
+                      "from" : 0, "size" : 250,
+                      "sort" : [
+                          { "created" : {"order" : "desc"}},
+                          { "_id" : "desc" }
+                      ],
+                      "query":{
+                        'bool' : {
+                          "must" : {
+                              "match_all" : {}
+                          },
+                          "filter" : {
+                            "and":[
+                              {"geohash_cell": {
+                                  "location": {
+                                      "lat": thisLat,
+                                      "lon": thisLon
+                                  },
+                                  "precision": thisDistance,
+                                  "neighbors": true
+                              }},
+                              {"match" : { "tweet_text" : thisText }}
+                              ]
+                          }
+                        }
+                      }
+                    }
+            }//if
+            else{
+                  mydata = {
+                      "from" : 0, "size" : 250,
+                      "sort" : [
+                          { "created" : {"order" : "desc"}},
+                          { "_id" : "desc" }
+                      ],
+                      "query":{
                         'bool' : {
                           "must" : {
                               "match_all" : {}
@@ -191,19 +249,25 @@ if (Meteor.isServer) {
                           "filter" : {
                               "geohash_cell": {
                                   "location": {
-                                      "lat": 37.7648,
-                                      "lon": -122.4201
+                                      "lat": thisLat,
+                                      "lon": thisLon
                                   },
-                                  "precision": 3,
+                                  "precision": thisDistance+"mi",
                                   "neighbors": true
                               }
                           }
                         }
-                      }}
+                      }
+                    }
+            }
+            
+            try{
+              var result = HTTP.call("GET", Meteor.settings.elasticsearchURL + '_search?fielddata_fields=location.geohash',
+                {data: mydata
                 }
 
                 );
-              console.log(result.content.toString());
+              //console.log(result.content.toString());
               return result.content;
             } catch (e) {
               console.log(e);
