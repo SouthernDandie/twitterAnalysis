@@ -32,3 +32,5 @@ meteorhacks:npm
 npm-container
 meteorhacks:async
 okgrow:promise
+react
+blaze

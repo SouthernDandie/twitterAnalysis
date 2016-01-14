@@ -4,56 +4,6 @@ if (Meteor.isClient) {
 
   Meteor.startup(function() {
     GoogleMaps.load();
-
-    /*if (location.search) {
-        var parts = location.search.substring(1).split('&');
-
-        for (var i = 0; i < parts.length; i++) {
-            var nv = parts[i].split('=');
-            if (!nv[0]) continue;
-            params[nv[0]] = nv[1] || true;
-        }
-    }
-
-    // Now you can get the parameters you want like so:
-    console.log(params.lat);
-    console.log(params.lon);
-    console.log(params.dis);
-    console.log(params.topic);
-
-
-              var finalTextArray = [];
-              var tempTextObject = {};
-
-
-
-            Meteor.call("elasticSearchGET", params.lat, params.lon, params.dis, params.topic, function(error, results) {
-              if(!error){
-                    var theRealData = JSON.parse(results);
-                    var theArray = theRealData.hits.hits;
-                    var myLatLng = {};
-                    
-                    console.log('hits: ' + theRealData.hits.total);
-                     for(var i=0; i<theRealData.hits.total; i++){
-                        myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
-                        var marker = new google.maps.Marker({
-                          position: myLatLng,
-                          map: GoogleMaps.maps.map.instance,
-                          animation: google.maps.Animation.DROP,
-                          title: theArray[i]['_source']['tweet_text']
-                        });
-                        tempTextObject = {'tweet' : theArray[i]['_source']['tweet_text'], 'location': myLatLng};
-                        finalTextArray.push(tempTextObject);
-
-                    }
-
-                                Session.set('tweets', finalTextArray);
-
-                    
-              }
-            });
-
-*/
   });
 
   Template.body.events({//searchForElasticSearch
@@ -76,6 +26,7 @@ if (Meteor.isClient) {
           });
               var finalTextArray = [];
               var tempTextObject = {};
+              var finalString = "<ul>";
 
 
             Meteor.call("elasticSearchGET", userLatitude, userLongitude, userDistance, userTopic, function(error, results) {
@@ -96,13 +47,13 @@ if (Meteor.isClient) {
                         tempTextObject = {'tweet' : theArray[i]['_source']['tweet_text'], 'location': myLatLng};
                         finalTextArray.push(tempTextObject);
 
-                    }
-                                Template.superTweetTemplate.prediction = function () {
-                                  tweets: finalTextArray
-                                };
+                        finalString = finalString + "<li>tweet: " + theArray[i]['_source']['tweet_text'];
+                        finalString = finalString + " location: " + theArray[i]['_source']['location']['lat'];
+                        finalString = finalString + ", " + theArray[i]['_source']['location']['lon'] + "</li>";
 
-                                Session.set('tweets', finalTextArray);
-                                Session.set('test', "finalTextArray");
+                    }
+                      finalString = finalString + "</ul>";          
+                      document.getElementById("test").innerHTML = finalString;
                     
               }
             });
@@ -122,16 +73,6 @@ if (Meteor.isClient) {
     }
   });
 
-  Template.body.helpers({
-
-       tweets: [
-        { tweet: "This is tweet 1", location: '37.322078, -121.931466' },
-        { tweet: "This is tweet 2", location: '37.322078, -121.931466' },
-        { tweet: "This is tweet 3", location: '37.322078, -121.931466' }
-      ]
-    
-                        
-   });
 
 
 
