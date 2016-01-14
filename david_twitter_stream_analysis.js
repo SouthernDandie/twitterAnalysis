@@ -16,7 +16,13 @@ if (Meteor.isClient) {
 
       //window.location = "http://localhost:3000/?topic="+userTopic+"&lat="+userLatitude+"&lon="+userLongitude+"&dis="+userDistance;
 
-          thisMap = GoogleMaps.maps.map.instance;
+        
+          thisMap = new google.maps.Map(document.getElementById('mapdiv'), {
+              center: {lat: parseFloat(userLatitude), lng: parseFloat(userLongitude)},
+              zoom: 8
+            });
+
+          //thisMap = GoogleMaps.maps.map.instance;
 
           GoogleMaps.ready('map', function(map) {
             var marker = new google.maps.Marker({
@@ -40,7 +46,7 @@ if (Meteor.isClient) {
                         myLatLng = {lat: theArray[i]['_source']['location']['lat'], lng: theArray[i]['_source']['location']['lon']};
                         var marker = new google.maps.Marker({
                           position: myLatLng,
-                          map: GoogleMaps.maps.map.instance,
+                          map: thisMap,//GoogleMaps.maps.map.instance,
                           animation: google.maps.Animation.DROP,
                           title: theArray[i]['_source']['tweet_text']
                         });
@@ -54,7 +60,6 @@ if (Meteor.isClient) {
                     }
                       finalString = finalString + "</ul>";          
                       document.getElementById("test").innerHTML = finalString;
-                    
               }
             });
 
