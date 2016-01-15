@@ -104,9 +104,9 @@ if (Meteor.isClient) {
         //console.log('lat: ' + event.latLng.lat());
         //console.log('long: ' + event.latLng.lng());
         //TURN THIS BACK ON TO ALLOW THE SERVER TO STREAM FROM TWITTER AND PUT THE RESULTS ON ELASTICSEARCH
-        //Meteor.call("checkTwitter", event.latLng.lat(), event.latLng.lng(), function(error, results) {
+        Meteor.call("checkTwitter", event.latLng.lat(), event.latLng.lng(), function(error, results) {
 
-        //});
+        });
 
 
        
@@ -133,7 +133,7 @@ if (Meteor.isServer) {
 
 
   });
-/*TURN THIS BACK ON TO ALLOW THE SERVER TO READ FROM TWITTER
+//TURN THIS BACK ON TO ALLOW THE SERVER TO READ FROM TWITTER
   Meteor.methods({checkTwitter: function (lat, long) {
 
 
@@ -151,12 +151,13 @@ if (Meteor.isServer) {
         try {
 
           
-          var theLocationToFind = [ long - .5, lat - .5, long + .5, lat + .5 ]
+          var theLocationToFind = [ long - 20.5, lat - 20.5, long + 20.5, lat + 20.5 ]
 
           var stream = T.stream('statuses/filter', { locations: theLocationToFind })
+          //var stream = T.stream('statuses', { })
 
           stream.on('tweet', function (tweet) {
-             
+             //console.log(tweet.text);
               var thisLat = null;
               var thisLon = null;
               if(tweet.geo != null){
@@ -209,7 +210,7 @@ if (Meteor.isServer) {
         }
 
 
-  }});*/
+  }});
 
 
 
@@ -289,12 +290,12 @@ if (Meteor.isServer) {
 
     });
 
-/* TURN THIS BACK ON TO ALLOW THE SERVER TO PUT TO THE ELASTICSEACH
+// TURN THIS BACK ON TO ALLOW THE SERVER TO PUT TO THE ELASTICSEACH
   function elasticSearchPostB(tweet, thisLat, thisLon){
     var Fiber = Meteor.npmRequire('fibers');
     var Future = Meteor.npmRequire('fibers/future');
     var future = new Future();
-
+            //console.log(thisLat + ', ' + thisLon);
             var date = new Date(); 
             Fiber(function(){
               try{
@@ -312,5 +313,5 @@ if (Meteor.isServer) {
 
             
   }
-*/
+
 }
